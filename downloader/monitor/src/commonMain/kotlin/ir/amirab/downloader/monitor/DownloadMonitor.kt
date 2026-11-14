@@ -112,7 +112,7 @@ class DownloadMonitor(
             var lastWrites = mapOf<Long, Long>()
             while (isActive) {
                 val newWrites = downloadManager.downloadJobs.associate {
-                    it.id to it.getDownloadedSize()
+                    it.id to (ir.amirab.downloader.connection.BilibiliMux.transfer(it.downloadItem.link)?.received ?: it.getDownloadedSize())
                 }
                 downloadSpeedFlow.value = SpeedAtTime(
                     newWrites.mapValues { (id, newWrite) ->

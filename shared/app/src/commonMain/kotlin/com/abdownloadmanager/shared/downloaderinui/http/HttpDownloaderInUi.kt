@@ -116,7 +116,10 @@ class HttpDownloaderInUi(
         val downloadItem = downloadJob.downloadItem
         val downloadJobStatus = downloadJob.status.value
         val parts = downloadJob.getParts()
-        val contentLength = downloadItem.contentLength
+        val transfer = ir.amirab.downloader.connection.BilibiliMux.transfer(downloadItem.link)
+        val received = transfer?.received
+        val estimated = transfer?.total?.let { maxOf(it, received ?: 0L) }
+        val contentLength = estimated ?: downloadItem.contentLength
         return RangeBasedProcessingDownloadItemState(
             id = downloadItem.id,
             folder = downloadItem.folder,
@@ -127,7 +130,10 @@ class HttpDownloaderInUi(
             completeTime = downloadItem.completeTime ?: -1,
             status = downloadJobStatus,
             saveLocation = downloadItem.name,
-            parts = parts.map {
+            parts = if (received != null) listOf(
+                UiRangedPart(-1, ir.amirab.downloader.part.PartDownloadStatus.ReceivingData,
+                    received, null, estimated, 1f)
+            ) else parts.map {
                 UiRangedPart.fromPart(
                     part = it,
                     totalLength = contentLength,

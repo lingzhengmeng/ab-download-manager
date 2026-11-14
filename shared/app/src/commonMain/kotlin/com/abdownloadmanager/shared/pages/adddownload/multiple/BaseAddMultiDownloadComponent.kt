@@ -296,6 +296,14 @@ abstract class BaseAddMultiDownloadComponent(
     }
 
     override fun onRequestAddToQueue(queueId: Long?, startQueue: Boolean) {
+        val items = getItemsToAdd(getCategorySelectionMode())
+        if (queueId == null && items.isNotEmpty() && items.all {
+                val page = (it.downloadItem as? ir.amirab.downloader.downloaditem.http.HttpDownloadItem)?.downloadPage
+                page?.startsWith("https://www.bilibili.com/video/") == true
+            }) {
+            requestDownloadAll()
+            return
+        }
         requestAddDownloads(queueId, startQueue)
     }
 

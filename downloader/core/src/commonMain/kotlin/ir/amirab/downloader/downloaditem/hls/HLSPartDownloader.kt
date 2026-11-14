@@ -18,6 +18,8 @@ class HLSPartDownloader(
     getDestWriter: () -> DestWriter,
     private val baseURL: String,
     private val client: HttpDownloaderClient,
+    private val requestHeaders: Map<String, String>?,
+    private val userAgent: String?,
     private val speedLimiters: List<SpeedLimiter>,
 ) : PartDownloader<
         MediaSegment
@@ -37,8 +39,17 @@ class HLSPartDownloader(
         requireNotNull(fullLink) {
             "link is incorrect! ${part.link}"
         }
+        val playlistUrl = HttpUrlUtils.createURL(baseURL)
+        val sameOrigin = fullLink.scheme == playlistUrl.scheme &&
+            fullLink.host == playlistUrl.host && fullLink.port == playlistUrl.port
+        val headers = requestHeaders?.filterKeys { name ->
+            name.equals("User-Agent", ignoreCase = true) ||
+                name.equals("Accept", ignoreCase = true) ||
+                (sameOrigin && (name.equals("Origin", ignoreCase = true) ||
+                    name.equals("Referer", ignoreCase = true)))
+        }
         val connect = client.connect(
-            HttpDownloadCredentials(fullLink.toString()),
+            HttpDownloadCredentials(fullLink.toString(), headers = headers, userAgent = userAgent),
             null, null,
         )
         if (stop || !currentCoroutineContext().isActive) {

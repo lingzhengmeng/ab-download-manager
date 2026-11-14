@@ -26,6 +26,14 @@ object EntrypointInitializer {
                     debug = debug,
                 )
             }
+            if (System.getProperty("abdm.mux.data") == null) {
+                System.setProperty("abdm.mux.data", AppInfo.dataDir.resolve("bilibili-mux").path)
+            }
+            if (System.getProperty("abdm.mux.ffmpeg") == null) {
+                AppInfo.installationFolder?.let { folder ->
+                    System.setProperty("abdm.mux.ffmpeg", java.io.File(folder, "YouTube/ffmpeg.exe").path)
+                }
+            }
             AppProperties.boot(AppInfo.definedPaths.appPropertiesFile)
 
             // FileKit is currently only used for file and directory pickers.

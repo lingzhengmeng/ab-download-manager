@@ -115,7 +115,7 @@ class OkHttpHttpDownloaderClient(
                         if (proxy.username != null && proxy.type == ProxyType.HTTP) {
                             it.proxyAuthenticator { _, r ->
                                 val credentials = Credentials.basic(
-                                    proxy.username,
+                                    requireNotNull(proxy.username),
                                     proxy.password.orEmpty()
                                 )
                                 r.request
@@ -137,6 +137,9 @@ class OkHttpHttpDownloaderClient(
         start: Long?,
         end: Long?,
     ): HttpResponseInfo {
+        BilibiliMux.token(credentials.link)?.let {
+            return BilibiliMux.info(credentials.link, it)
+        }
         newCall(
             downloadCredentials = credentials,
             start = start,
@@ -169,6 +172,9 @@ class OkHttpHttpDownloaderClient(
         start: Long?,
         end: Long?,
     ): Connection<HttpResponseInfo> {
+        BilibiliMux.token(credentials.link)?.let {
+            return BilibiliMux.connect(credentials.link, it, start, this)
+        }
         val response = newCall(
             downloadCredentials = credentials,
             start = start,

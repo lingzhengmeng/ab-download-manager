@@ -1,0 +1,1 @@
+function f(n,r,e){return n>=r&&n<=e}function l(n,r,e){return n<r?r:n>e?e:n}function s(n){return t(n)?!0:i(n)}function t(n){return n==null}function u(n){return n.length===0}function i(n){return u(n.trim())}export{s as a,f as b,l as c,i};

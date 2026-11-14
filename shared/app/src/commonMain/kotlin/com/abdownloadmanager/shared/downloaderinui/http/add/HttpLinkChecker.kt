@@ -39,7 +39,14 @@ class HttpLinkChecker(
         val length = responseInfo?.run {
             totalLength.takeIf { isSuccessFul }
         }
-        _suggestedName.update { suggestedName }
+        val pageHost = credentials.value.downloadPage?.let {
+            runCatching { java.net.URI(it).host }.getOrNull()
+        }
+        val isBilibiliTrack = pageHost == "www.bilibili.com" &&
+            HttpUrlUtils.extractNameFromLink(credentials.value.link)
+                ?.endsWith(".m4s", ignoreCase = true) == true
+        val merged = ir.amirab.downloader.connection.BilibiliMux.token(credentials.value.link) != null
+        _suggestedName.update { suggestedName.takeUnless { isBilibiliTrack || merged } }
         _length.update { length }
     }
 }

@@ -190,6 +190,11 @@ abstract class BaseAddSingleDownloadComponent(
     }
 
     fun getLengthString(): StringSource {
+        val response = checkResponseResult.value?.getOrNull() as? ir.amirab.downloader.connection.response.HttpResponseInfo
+        val duration = response?.responseHeaders?.get("x-abdm-media-duration")?.toDoubleOrNull()
+        if (duration != null && duration.isFinite() && duration > 0) {
+            return com.abdownloadmanager.shared.util.convertDurationToHumanReadable(duration)
+        }
         return downloadInputsComponent.getLengthString()
     }
 

@@ -57,10 +57,13 @@ data class HLSResponseInfo(
                 ?.let(HttpUrlUtils::extractNameFromLink)
                 ?.let(FileNameUtil::getExtensionOrNull)
                 ?.lowercase()
-            if (firstSegmentExtension != "ts") {
-                throw UnsupportedOperationException(
-                    "Only HLS .ts segments supported at the moment, but '$firstSegmentExtension' provided"
-                )
+            val init = mediaSegments.first().segmentMap().orElse(null)
+            if (init != null) {
+                require(!init.byteRange().isPresent && mediaSegments.all {
+                    !it.byteRange().isPresent && it.segmentMap().orElse(init) == init
+                }) { "fMP4 requires one shared initialization segment and separate segment files." }
+            } else {
+                require(firstSegmentExtension == "ts") { "Missing fMP4 initialization segment." }
             }
             if (isMediaPlayListEncrypted(playlist)) {
                 throw UnsupportedOperationException(

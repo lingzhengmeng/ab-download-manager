@@ -111,6 +111,11 @@ abstract class DownloadJob(
             _isDownloadActive.update { false }
             onDownloadFinishedBeforeSave()
             saveState()
+            runCatching {
+                ir.amirab.downloader.connection.CaptionTextExport.save(
+                    downloadItem.downloadPage, downloadManager.calculateOutputFile(downloadItem)
+                )
+            }
             downloadManager.onDownloadFinished(downloadItem)
         }
     }

@@ -475,6 +475,8 @@ class HLSDownloadJob(
             return partDownloaderList.getOrPut(part.getID()) {
                 HLSPartDownloader(
                     baseURL = downloadItem.link,
+                    requestHeaders = downloadItem.headers,
+                    userAgent = downloadItem.userAgent,
                     part = part,
                     getDestWriter = {
                         destination.getWriterFor(part)
@@ -528,7 +530,9 @@ class HLSDownloadJob(
     fun updateParts(
         playlist: MediaPlaylist
     ) {
-        val newParts = playlist.mediaSegments()
+        val segments = playlist.mediaSegments()
+        val init = segments.firstOrNull()?.segmentMap()?.orElse(null)
+        val newParts = segments
             .mapIndexed { index, segment ->
                 MediaSegment(
                     segmentIndex = playlist.mediaSequence() + index,
@@ -537,16 +541,19 @@ class HLSDownloadJob(
                 )
             }
         val currentParts = parts
+        val orderedParts = if (init == null) newParts else listOf(
+            MediaSegment(segmentIndex = playlist.mediaSequence() - 1, link = init.uri(), duration = 0.0)
+        ) + newParts
         downloadItem.duration = newParts.sumOf { it.duration }
         if (currentParts.isEmpty()) {
-            setParts(newParts)
+            setParts(orderedParts)
             return
         }
         val oldPartsMap = currentParts.associateBy {
             it.segmentIndex
         }
-        val newPartsToSave = ArrayList<MediaSegment>(newParts.size)
-        for (newPart in newParts) {
+        val newPartsToSave = ArrayList<MediaSegment>(orderedParts.size)
+        for (newPart in orderedParts) {
             val oldPart = oldPartsMap[newPart.segmentIndex]
             var newPartToAdd = newPart
             if (oldPart != null) {
@@ -556,7 +563,7 @@ class HLSDownloadJob(
                     )
                 } else {
                     // inconsistencies found! reset the parts to the new one
-                    setParts(newParts)
+                    setParts(orderedParts)
                     return
                 }
             }
@@ -656,4 +663,3 @@ class HLSDownloadJob(
         }
     }
 }
-
